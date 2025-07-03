@@ -1,0 +1,750 @@
+run_name: OLMo2-1B-stage1-step-1500-to-2000-mod-pararel-12rel-rm-occ
+seed: 6198
+dry_run: false
+
+wandb:
+  entity: rahuln
+  name: ${run_name}
+  project: olmo-1b
+  group: ${run_name}
+
+model:
+  d_model: 2048
+  n_heads: 16
+  n_layers: 16
+  mlp_ratio: 8
+  weight_tying: false
+  alibi: false
+  rope: true
+  rope_theta: 500000
+  flash_attention: true
+  attention_dropout: 0.0
+  include_bias: false
+  block_type: sequential
+  layer_norm_type: rms
+  layer_norm_with_affine: true
+  layer_norm_eps: 1e-6
+  bias_for_layer_norm: false
+  attention_layer_norm: true
+  attention_layer_norm_with_affine: true
+  norm_after: true
+  activation_type: swiglu
+  residual_dropout: 0.0
+  embedding_dropout: 0.0
+  max_sequence_length: 4096
+  vocab_size: 100278
+  embedding_size: 100352
+  eos_token_id: 100257
+  pad_token_id: 100277
+  init_device: meta
+  init_fn: normal
+  init_std: 0.02
+  init_cutoff_factor: 3
+
+softmax_auxiliary_loss: true
+auxiliary_loss_multiplier: 1e-5
+fused_loss: true
+
+compile: null
+
+optimizer:
+  name: adamw
+  learning_rate: 4.0e-4
+  weight_decay: 0.1
+  eps: 1e-8
+  decay_norm_and_bias: true
+  decay_embeddings: false
+  betas:
+  - 0.9
+  - 0.95
+  metrics_log_interval: 1
+
+scheduler:
+  name: cosine_with_warmup
+  units: tokens
+  t_warmup: 8388608000
+  t_max: 5e12
+  alpha_f: 0.1
+  warmup_min_lr: 0.0
+
+tokenizer:
+  identifier: tokenizers/allenai_dolma2.json
+  truncate_direction: right
+
+save_folder: results/${run_name}
+save_overwrite: true
+
+save_interval: 100
+save_interval_ephemeral: 1000
+save_num_checkpoints_to_keep: 1
+# sharded_checkpointer: olmo_core
+
+save_interval_unsharded: null
+save_num_unsharded_checkpoints_to_keep: -1
+
+load_path: /anvil/projects/ai250124/x-rnadkarni/src/OLMo/results/OLMo-2-0425-1B-step-0-to-2000-save-every-100-unsharded/step1500-unsharded
+stop_after: 500
+
+max_duration: 4e12T
+global_train_batch_size: 512
+device_train_microbatch_size: 4
+
+precision: amp_bf16
+
+fsdp:
+  wrapping_strategy: null
+  sharding_strategy: SHARD_GRAD_OP
+  precision: mixed
+
+max_grad_norm: 1.0
+max_grad_norm_ratio: null
+
+speed_monitor:
+  window_size: 1
+
+gen1_gc_interval: 10
+
+eval_interval: 1000
+eval_subset_num_batches: -1
+device_eval_batch_size: ${device_train_microbatch_size}
+evaluators:
+  # - label: all-small-ppl-validation
+  #   data:
+  #     num_workers: 0
+  #     drop_last: true
+  #     # generate_doc_lengths: true
+  #     memmap_dtype: uint32
+  #     datasets:
+  #       c4_en-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/c4_en/val/part-0-00000.npy
+  #       dolma_books-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/dolma_books/val/part-0-00000.npy
+  #       dolma_common-crawl-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/dolma_common-crawl/val/part-0-00000.npy
+  #       dolma_pes2o-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/dolma_pes2o/val/part-0-00000.npy
+  #       dolma_reddit-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/dolma_reddit/val/part-0-00000.npy
+  #       dolma_stack-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/dolma_stack/val/part-0-00000.npy
+  #       dolma_wiki-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/dolma_wiki/val/part-0-00000.npy
+  #       ice-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/ice/val/part-0-00000.npy
+  #       m2d2_s2orc-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/m2d2_s2orc/val/part-0-00000.npy
+  #       pile-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/pile/val/part-0-00000.npy
+  #       wikitext_103-validation:
+  #         - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/eval-data/perplexity/v3_small_dolma2-tokenizer/wikitext_103/val/part-0-00000.npy
+
+  ##########################
+  # Downstream evaluations #
+  ##########################
+  - label: piqa
+    type: downstream
+
+  - label: hellaswag
+    type: downstream
+
+  - label: winogrande
+    type: downstream
+
+  - label: openbook_qa
+    type: downstream
+
+  - label: boolq
+    type: downstream
+
+  - label: sciq
+    type: downstream
+
+  - label: arc_easy
+    type: downstream
+
+  - label: arc_challenge
+    type: downstream
+
+  - label: copa
+    type: downstream
+
+  #- label: rte
+  #  type: downstream
+
+  #- label: commitment_bank
+  #  type: downstream
+
+  #- label: sst2
+  #  type: downstream
+
+  - label: commonsense_qa
+    type: downstream
+
+  - label: social_iqa
+    type: downstream
+
+  - label: mmlu_stem_var
+    type: downstream
+
+  - label: mmlu_humanities_var
+    type: downstream
+
+  - label: mmlu_social_sciences_var
+    type: downstream
+
+  - label: mmlu_other_var
+    type: downstream
+
+  - label: mmlu_stem_mc_5shot
+    type: downstream
+
+  - label: mmlu_humanities_mc_5shot
+    type: downstream
+
+  - label: mmlu_social_sciences_mc_5shot
+    type: downstream
+
+  - label: mmlu_other_mc_5shot
+    type: downstream
+
+  - label: mmlu_stem_mc_5shot_test
+    type: downstream
+
+  - label: mmlu_humanities_mc_5shot_test
+    type: downstream
+
+  - label: mmlu_social_sciences_mc_5shot_test
+    type: downstream
+
+  - label: mmlu_other_mc_5shot_test
+    type: downstream
+
+  - label: basic_arithmetic
+    type: downstream
+
+  - label: trivia_qa_wiki_ppl
+    type: downstream
+
+  - label: natural_qs_open_ppl
+    type: downstream
+
+  - label: arc_easy_ppl
+    type: downstream
+
+data:
+  pad_direction: right
+  # generate_doc_lengths: true
+  num_workers: 32
+  drop_last: true
+  pin_memory: true
+  prefetch_factor: 8
+  persistent_workers: true
+  memmap_dtype: uint32
+  timeout: 0
+  instance_filter:
+    repetition_max_period: 13
+    repetition_min_period: 1
+    repetition_max_count: 32
+  shuffle_train: False
+  set_start_index: False
+  paths:
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1500.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1501.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1502.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1503.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1504.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1505.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1506.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1507.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1508.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1509.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1510.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1511.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1512.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1513.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1514.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1515.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1516.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1517.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1518.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1519.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1520.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1521.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1522.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1523.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1524.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1525.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1526.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1527.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1528.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1529.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1530.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1531.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1532.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1533.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1534.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1535.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1536.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1537.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1538.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1539.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1540.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1541.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1542.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1543.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1544.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1545.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1546.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1547.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1548.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1549.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1550.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1551.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1552.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1553.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1554.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1555.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1556.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1557.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1558.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1559.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1560.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1561.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1562.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1563.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1564.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1565.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1566.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1567.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1568.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1569.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1570.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1571.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1572.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1573.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1574.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1575.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1576.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1577.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1578.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1579.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1580.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1581.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1582.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1583.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1584.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1585.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1586.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1587.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1588.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1589.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1590.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1591.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1592.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1593.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1594.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1595.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1596.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1597.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1598.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1599.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1600.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1601.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1602.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1603.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1604.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1605.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1606.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1607.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1608.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1609.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1610.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1611.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1612.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1613.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1614.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1615.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1616.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1617.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1618.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1619.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1620.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1621.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1622.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1623.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1624.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1625.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1626.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1627.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1628.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1629.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1630.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1631.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1632.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1633.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1634.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1635.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1636.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1637.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1638.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1639.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1640.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1641.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1642.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1643.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1644.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1645.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1646.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1647.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1648.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1649.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1650.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1651.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1652.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1653.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1654.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1655.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1656.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1657.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1658.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1659.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1660.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1661.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1662.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1663.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1664.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1665.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1666.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1667.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1668.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1669.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1670.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1671.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1672.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1673.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1674.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1675.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1676.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1677.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1678.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1679.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1680.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1681.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1682.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1683.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1684.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1685.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1686.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1687.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1688.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1689.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1690.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1691.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1692.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1693.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1694.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1695.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1696.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1697.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1698.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1699.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1700.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1701.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1702.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1703.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1704.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1705.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1706.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1707.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1708.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1709.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1710.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1711.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1712.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1713.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1714.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1715.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1716.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1717.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1718.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1719.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1720.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1721.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1722.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1723.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1724.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1725.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1726.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1727.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1728.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1729.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1730.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1731.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1732.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1733.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1734.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1735.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1736.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1737.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1738.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1739.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1740.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1741.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1742.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1743.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1744.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1745.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1746.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1747.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1748.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1749.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1750.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1751.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1752.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1753.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1754.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1755.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1756.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1757.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1758.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1759.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1760.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1761.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1762.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1763.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1764.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1765.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1766.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1767.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1768.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1769.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1770.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1771.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1772.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1773.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1774.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1775.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1776.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1777.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1778.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1779.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1780.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1781.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1782.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1783.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1784.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1785.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1786.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1787.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1788.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1789.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1790.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1791.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1792.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1793.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1794.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1795.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1796.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1797.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1798.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1799.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1800.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1801.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1802.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1803.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1804.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1805.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1806.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1807.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1808.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1809.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1810.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1811.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1812.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1813.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1814.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1815.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1816.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1817.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1818.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1819.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1820.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1821.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1822.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1823.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1824.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1825.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1826.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1827.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1828.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1829.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1830.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1831.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1832.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1833.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1834.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1835.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1836.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1837.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1838.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1839.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1840.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1841.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1842.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1843.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1844.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1845.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1846.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1847.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1848.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1849.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1850.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1851.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1852.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1853.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1854.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1855.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1856.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1857.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1858.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1859.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1860.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1861.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1862.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1863.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1864.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1865.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1866.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1867.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1868.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1869.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1870.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1871.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1872.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1873.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1874.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1875.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1876.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1877.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1878.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1879.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1880.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1881.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1882.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1883.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1884.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1885.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1886.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1887.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1888.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1889.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1890.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1891.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1892.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1893.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1894.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1895.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1896.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1897.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1898.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1899.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1900.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1901.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1902.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1903.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1904.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1905.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1906.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1907.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1908.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1909.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1910.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1911.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1912.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1913.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1914.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1915.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1916.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1917.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1918.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1919.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1920.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1921.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1922.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1923.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1924.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1925.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1926.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1927.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1928.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1929.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1930.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1931.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1932.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1933.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1934.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1935.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1936.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1937.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1938.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1939.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1940.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1941.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1942.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1943.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1944.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1945.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1946.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1947.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1948.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1949.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1950.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1951.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1952.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1953.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1954.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1955.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1956.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1957.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1958.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1959.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1960.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1961.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1962.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1963.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1964.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1965.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1966.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1967.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1968.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1969.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1970.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1971.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1972.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1973.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1974.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1975.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1976.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1977.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1978.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1979.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1980.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1981.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1982.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1983.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1984.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1985.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1986.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1987.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1988.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1989.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1990.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1991.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1992.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1993.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1994.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1995.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1996.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1997.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1998.npy
+    - /anvil/projects/ai250124/x-rnadkarni/data/olmo-mix-1124/modified/002_mod_1500_to_2000_pararel_12rel_rm_occ_mmap/1999.npy
