@@ -623,6 +623,8 @@ class DataConfig(BaseConfig):
     seed: Optional[int] = None
     instance_filter: Optional[InstanceFilterConfig] = None
     custom_dataset: Optional[CustomDatasetConfig] = None
+    shuffle_train: bool = True
+    set_start_index: bool = True
 
     @property
     def effective_memmap_dtype(self):

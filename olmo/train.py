@@ -400,7 +400,7 @@ class Trainer:
             # NOTE: on the other hand we don't add anything to 'self.global_train_tokens_seen' here because
             # that variable is meant to track the actual number of tokens trained on.
 
-        if self.global_train_examples_seen_this_epoch > 0:
+        if self.global_train_examples_seen_this_epoch > 0 and self.cfg.data.set_start_index:
             assert isinstance(self.dataset, IterableDataset)
             log.info(f"Data loader will start at instance index {self.global_train_examples_seen_this_epoch:,d}")
             self.dataset.start_index = self.global_train_examples_seen_this_epoch
