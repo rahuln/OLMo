@@ -76,7 +76,7 @@ save_num_checkpoints_to_keep: 1
 save_interval_unsharded: null
 save_num_unsharded_checkpoints_to_keep: -1
 
-load_path: /anvil/projects/ai250124/x-rnadkarni/model_checkpoints/allenai-OLMo-2-1124-7B/step2000-unsharded
+load_path: /anvil/projects/x-nairr250124/x-rnadkarni/model_checkpoints/allenai-OLMo-2-1124-7B/step2000-unsharded
 
 max_duration: 928646
 global_train_batch_size: 1024
